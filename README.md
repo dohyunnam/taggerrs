@@ -1,10 +1,16 @@
-##taggers, a rust-based tag-based file manager capable of advanced file relationships and searches via sqlite
+## taggers
 
-to run: 
+a rust-based tag-based file manager capable of advanced file relationships and searches via sqlite
 
-```cargo build```
+# to run: 
 
-```cargo run --release```
+```bash
+# build the project
+cargo build
 
-##demo for v 0.1.0:
+#run the app
+cargo run --release
+```
+
+## demo for v 0.1.0:
 ![image](https://github.com/user-attachments/assets/1d72c897-3069-40bf-be87-4e01418123ae)
