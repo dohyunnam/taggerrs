@@ -12,6 +12,7 @@ pub struct TaggerrsTemplate {
     currently_active_menu: String,
     currently_active_path: Option<String>,
     gallery_media_box_size: f32,
+    gallery_media_boxes_per_row: u32,
 
     #[serde(skip)]
     input_path_usestate: String,
@@ -31,6 +32,7 @@ impl Default for TaggerrsTemplate {
             current_path_filepaths: None,
             settings_modal_open: false,
             gallery_media_box_size: 200.0,
+            gallery_media_boxes_per_row: 2,
         }
     }
 }
@@ -76,6 +78,7 @@ impl eframe::App for TaggerrsTemplate {
                     modal::settings_modal(
                         ui,
                         &mut self.gallery_media_box_size,
+                        &mut self.gallery_media_boxes_per_row,
                     );
                 }
             );
@@ -114,6 +117,7 @@ impl eframe::App for TaggerrsTemplate {
                     &self.currently_active_path,
                     &mut self.current_path_filepaths,
                     &self.gallery_media_box_size,
+                    &self.gallery_media_boxes_per_row,
                 );
             } else {
                 static_page::default_window(ui);
