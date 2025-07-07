@@ -13,35 +13,40 @@ pub fn file_gallery(
         
         if let Ok(entries) = entries {
             let files: Vec<String> = entries.filter_map(Result::ok)
-                .filter(|entry| {
-                    let path = entry.path();
-                    path.is_file() && path.extension().map_or(false, |ext| {
-                        ext == "png" || ext == "jpg" || ext == "jpeg"
-                    })
+            .filter(|entry| {
+                let path = entry.path();
+                path.is_file() && path.extension().map_or(false, |ext| {
+                ext == "png" || ext == "jpg" || ext == "jpeg"
                 })
-                .map(|entry| entry.path().display().to_string())
-                .collect();
+            })
+            .map(|entry| entry.path().display().to_string())
+            .collect();
 
             *current_path_filepaths = Some(files);
-            
-            ui.horizontal(|ui| {
-                for image_path in current_path_filepaths.as_ref().unwrap() {
-                    if let Ok(bytes) = std::fs::read(image_path) {
-                        ui.group( |ui| {
-                            ui.vertical(|ui| {
-                                ui.set_max_width(*gallery_media_box_size);
-                                ui.set_max_height(*gallery_media_box_size);
-                                ui.add(
-                                egui::Image::from_bytes("image", bytes)
-                                    .max_height(*gallery_media_box_size)
-                                    .max_width(*gallery_media_box_size)
-                                );
-                                ui.label(image_path);
-                            });
+
+            if let Some(files) = current_path_filepaths.as_ref() {
+                let images_per_row = 3;
+                egui::ScrollArea::vertical().show(ui, |ui| {
+                    for chunk in files.chunks(images_per_row) {
+                        ui.horizontal(|ui| {
+                            for image_path in chunk {
+                                if let Ok(bytes) = std::fs::read(image_path) {
+                                    ui.group(|ui| {
+                                        ui.vertical(|ui| {
+                                            ui.set_width(*gallery_media_box_size);
+                                            ui.set_height(*gallery_media_box_size);
+                                            ui.add(
+                                                egui::Image::from_bytes("image", bytes)
+                                            );
+                                            ui.label(image_path);
+                                        });
+                                    });
+                                }
+                            }
                         });
                     }
-                }
-            });
+                });
+            }
         } else {
             *current_path_filepaths = None;
         }
