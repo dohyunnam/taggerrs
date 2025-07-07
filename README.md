@@ -1,4 +1,4 @@
-# taggers
+# taggerrs
 
 lightweight, blazing fast tag-based file manager
 
