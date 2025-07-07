@@ -1,4 +1,5 @@
 ![image](src/assets/icon.png)
+
 lightweight, blazing fast tag-based file manager
 
 ### features
