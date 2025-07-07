@@ -1,6 +1,12 @@
 # taggers
 
-a rust-based tag-based file manager capable of advanced file relationships and searches via sqlite
+lightweight, blazing fast tag-based file manager
+
+### features
++ entirely written in rust (except for rusqlite)
++ advanced file relationships using sqlite
++ quick media preview
++ integration with external apps for customized media CRUD
 
 ### to run: 
 
