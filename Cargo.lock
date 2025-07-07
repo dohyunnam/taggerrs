@@ -3491,6 +3491,7 @@ dependencies = [
  "egui",
  "egui_extras",
  "image 0.25.6",
+ "mime",
  "rusqlite",
  "serde",
  "thumbnailer",
