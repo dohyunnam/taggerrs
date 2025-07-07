@@ -37,6 +37,8 @@ pub fn file_gallery(
                                             ui.set_height(*gallery_media_box_size);
                                             ui.add(
                                                 egui::Image::from_bytes(image_path.to_string(), bytes)
+                                                    .max_width(200.0)
+                                                    .max_height(200.0)
                                             );
                                             ui.label(image_path);
                                         });
