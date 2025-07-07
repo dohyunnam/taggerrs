@@ -1,4 +1,4 @@
-![image](./assets/icon.png)
+![image](src/assets/icon.png)
 # taggerrs
 
 lightweight, blazing fast tag-based file manager
