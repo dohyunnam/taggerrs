@@ -184,5 +184,9 @@ impl eframe::App for TaggerrsTemplate {
 
             static_page::footer(ui);
         });
+        
+        // Keep the app responsive even when window loses focus (Linux fix)
+        // Use a timer to avoid excessive CPU usage while still keeping background tasks running
+        ctx.request_repaint_after(std::time::Duration::from_secs(1));
     }
 }
