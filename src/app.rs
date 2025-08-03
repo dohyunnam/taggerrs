@@ -4,22 +4,48 @@
 #[path = "utils/modal.rs"] mod modal;
 #[path = "utils/settings_loader.rs"] mod settings_loader;
 
+use std::collections::HashMap;
+use std::sync::Arc;
+use tokio::sync::Mutex;
+use egui_file_dialog::FileDialog;
+
+#[derive(Clone)]
+pub struct ImageData {
+    pub bytes: Vec<u8>,
+    pub loading: bool,
+}
+
+#[derive(Clone)]
+pub enum DirectoryScanState {
+    Scanning,
+    Complete(Vec<String>),
+}
+
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)]
 
 pub struct TaggerrsTemplate {
     paths: Vec<String>,
     currently_active_menu: String,
-    currently_active_path: Option<String>,
     gallery_media_box_size: f32,
     gallery_media_boxes_per_row: u32,
 
+    #[serde(skip)]
+    currently_active_path: Option<String>,
     #[serde(skip)]
     input_path_usestate: String,
     #[serde(skip)]
     current_path_filepaths: Option<Vec<String>>,
     #[serde(skip)]
     settings_modal_open: bool,
+    #[serde(skip)]
+    image_cache: Arc<Mutex<HashMap<String, ImageData>>>,
+    #[serde(skip)]
+    runtime: Arc<tokio::runtime::Runtime>,
+    #[serde(skip)]
+    directory_scan_state: Arc<Mutex<HashMap<String, DirectoryScanState>>>,
+    #[serde(skip)]
+    file_dialog: FileDialog,
 }
 
 impl Default for TaggerrsTemplate {
@@ -33,6 +59,13 @@ impl Default for TaggerrsTemplate {
             settings_modal_open: false,
             gallery_media_box_size: 200.0,
             gallery_media_boxes_per_row: 2,
+            image_cache: Arc::new(Mutex::new(HashMap::new())),
+            runtime: Arc::new(tokio::runtime::Runtime::new().unwrap()),
+            directory_scan_state: Arc::new(Mutex::new(HashMap::new())),
+            file_dialog: FileDialog::new()
+                .default_size([600.0, 400.0])
+                .show_new_folder_button(true)
+                .show_search(true),
         }
     }
 }
@@ -57,8 +90,28 @@ impl eframe::App for TaggerrsTemplate {
         eframe::set_value(storage, eframe::APP_KEY, self);
     }
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        // Update the file dialog first
+        self.file_dialog.update(ctx);
+        
+        // Check if user picked a folder
+        if let Some(picked_path) = self.file_dialog.take_picked() {
+            let path_str = picked_path.to_string_lossy().to_string();
+            if !self.paths.contains(&path_str) {
+                self.paths.push(path_str.clone());
+            }
+            self.currently_active_path = Some(path_str.clone());
+            self.current_path_filepaths = None;
+            
+            // Reset directory scan state for new path
+            if let Ok(mut state_map) = self.directory_scan_state.try_lock() {
+                state_map.remove(&path_str);
+            }
+        }
+        
+        // Only request repaint when needed to prevent excessive CPU usage
+        
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
-            egui::menu::bar(ui, |ui| {
+            egui::MenuBar::new().ui(ui, |ui| {
                 ui.menu_button("File", |ui| {
                     if ui.button("Exit").clicked() {
                         ctx.send_viewport_cmd(egui::ViewportCommand::Close);
@@ -103,6 +156,8 @@ impl eframe::App for TaggerrsTemplate {
                     &mut self.input_path_usestate,
                     &mut self.currently_active_path,
                     &mut self.current_path_filepaths,
+                    &self.directory_scan_state,
+                    &mut self.file_dialog,
                 );
             } else if self.currently_active_menu == "Tag Manager" {
                 sidebar_modules::sidebar_tag_manager(ui);
@@ -114,10 +169,14 @@ impl eframe::App for TaggerrsTemplate {
             if !self.currently_active_path.is_none() {
                 centralpanel_modules::file_gallery(
                     ui,
+                    ctx,
                     &self.currently_active_path,
                     &mut self.current_path_filepaths,
                     &self.gallery_media_box_size,
                     &self.gallery_media_boxes_per_row,
+                    &self.image_cache,
+                    &self.runtime,
+                    &self.directory_scan_state,
                 );
             } else {
                 static_page::default_window(ui);
